@@ -1,0 +1,54 @@
+group "org.ow2.proactive"
+version projectVersion
+
+allprojects {
+    apply plugin: "java"
+    apply plugin: "maven"
+
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+
+    uploadArchives {
+        repositories {
+            mavenDeployer {
+                snapshotRepository(url: "http://repository.activeeon.com/content/repositories/snapshots/") {
+                    authentication(userName: "${System.getProperty("nexusUsername")}",
+                            password: "${System.getProperty("nexusPassword")}")
+                }
+                repository(url: "http://repository.activeeon.com/content/repositories/releases/") {
+                    authentication(userName: "${System.getProperty("nexusUsername")}",
+                            password: "${System.getProperty("nexusPassword")}")
+                }
+            }
+        }
+    }
+}
+
+defaultTasks "clean", "jar"
+
+repositories {
+    if (project.hasProperty("local")) {
+        mavenLocal()
+    }
+
+    jcenter()
+    maven { url "http://repository.activeeon.com/content/groups/proactive/" }
+}
+
+dependencies {
+    compile "org.awaitility:awaitility:2.0.0"
+    compile "com.google.guava:guava:19.0"
+    compileOnly "org.ow2.proactive:scheduler-api:$projectVersion"
+
+    testCompile "com.google.truth:truth:0.29"
+    testCompile "junit:junit:4.12"
+    testCompile "org.ow2.proactive:scheduler-api:$projectVersion"
+}
+
+jar {
+    from {
+        configurations.compile
+                .findAll { !it.name.toLowerCase().contains("slf4j") }
+                .collect { it.isDirectory() ? it : zipTree(it) }
+    }
+}
