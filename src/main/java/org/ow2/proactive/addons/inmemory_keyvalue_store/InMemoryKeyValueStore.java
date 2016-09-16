@@ -167,29 +167,43 @@ public class InMemoryKeyValueStore implements InitActive {
     public boolean subscribe(String channel, Subscriber subscriber) {
         synchronized (channels) {
             boolean result = channels.put(channel, PAActiveObject.getUrl(subscriber));
-            // used to weak up publish operations that are waiting for a subscriber
+            // used to wake up publish operations that are waiting for a subscriber
             channels.notifyAll();
             return result;
         }
     }
 
     @ImmediateService
+    public boolean unsubscribe(String channel, Subscriber subscriber) {
+        return unsubscribe(channel, subscriber, false);
+    }
+
+    @ImmediateService
     public boolean unsubscribe(String channel, Subscriber subscriber, boolean deleteAssociatedChannelData) {
         synchronized (channels) {
-            if (deleteAssociatedChannelData) {
-                synchronized (data) {
-                    data.row(channel).clear();
-                }
-            }
-
+            deleteDataAssociatedToChannel(channel, deleteAssociatedChannelData);
             return channels.remove(channel, PAActiveObject.getUrl(subscriber));
         }
     }
 
     @ImmediateService
     public Collection<String> unsubscribeAll(String channel) {
+        return unsubscribeAll(channel, false);
+    }
+
+    @ImmediateService
+    public Collection<String> unsubscribeAll(String channel, boolean deleteAssociatedChannelData) {
         synchronized (channels) {
+            deleteDataAssociatedToChannel(channel, deleteAssociatedChannelData);
             return channels.removeAll(channel);
+        }
+    }
+
+    private void deleteDataAssociatedToChannel(String channel, boolean deleteAssociatedChannelData) {
+        if (deleteAssociatedChannelData) {
+            synchronized (data) {
+                data.row(channel).clear();
+            }
         }
     }
 
@@ -199,15 +213,15 @@ public class InMemoryKeyValueStore implements InitActive {
     // Fixing such a behaviour requires to handle the synchronization on the caller.
     // It means that a new Active Objects will be needed to receive an acknowledgement
     // saying that the condition is satisfied.
-    // This change has not be done yet since it was not required for the CLIF project
+    // This change has not be done yet since it was not required for the CLIF project.
     @ImmediateService
     public boolean waitSubscriptions(String channel, int minNumberOfSubscriptionAwaited) {
         synchronized (channels) {
             while (channels.get(channel).size() < minNumberOfSubscriptionAwaited) {
                 try {
                     // use timeout to be able to interrupt the thread is required
-                    // TODO: extract timeout value as parameter?
-                    channels.wait(1000);
+                    // TODO: extract timeout value as parameter and/or property?
+                    channels.wait(500);
                 } catch (InterruptedException e) {
                     // TODO use a logger
                     e.printStackTrace();
