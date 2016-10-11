@@ -61,7 +61,10 @@ public class BlockingEventListener implements InitActive, EventListener {
     // using optional from Guava since the one from JDK is not Serializable
     private Optional<String> expectedKey;
 
-    private Serializable lastValueReceived;
+    // this field can be updated by one thread at a time only
+    // but read by multiple at the same time.
+    // volatile is used to ensure visibility in all threads
+    private volatile Serializable lastValueReceived;
 
     /**
      * This public empty noarg constructor is required by ProActive.
