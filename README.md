@@ -15,7 +15,7 @@ users to listen for changes.
 The code is not ready yet for use in production and should not be integrated for
 now in a release of ProActive Workflows and Scheduling. The API was designed
 based on the requirements for Orange CLIF. It could most probably be
-generalized, naming enhanced, etc. 
+generalized, naming enhanced, etc.
 
 Besides, the source code includes some TODO and FIXME comments that should be
 fixed. Finally, lot of tests are missing.
@@ -30,4 +30,3 @@ It will generate a JAR file in
 `build/libs/inmemory-keyvalue-store-addons-X.Y.Z.jar`
 
 Copy the JAR file in the `addons` folder of your ProActive installation(s).
-
